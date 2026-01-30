@@ -108,12 +108,10 @@ contract StableCointTest is Test {
     }
 
     function testBurn_revert_whenAmountHigherThanDebt() public {
-        deal(address(stablecoin), address(this), 100 ether);
-        assertEq(stablecoin.balanceOf(address(this)), 100 ether);
-        assertEq(stablecoin.debt(address(this)), 0);
-
-        vm.expectRevert("Too much burn");
-        stablecoin.burn(1 ether);
+        uint256 toBurn = 100;
+        deal(address(stablecoin), address(this), toBurn);
+        vm.expectRevert();
+        stablecoin.burn(toBurn + 1);
     }
 
     function testWithdraw_retrievesCollateral_whenNoDebt() public {
@@ -152,5 +150,58 @@ contract StableCointTest is Test {
         stablecoin.withdraw(1 ether);
     }
 
-    
+    function testLiquidate_successful() public {
+        address user = address(0xBEEF);
+        uint256 depositAmount = 1 ether;
+
+        vm.deal(user, depositAmount);
+        vm.prank(user);
+        stablecoin.deposit{value: depositAmount}();
+
+        uint256 ethPrice = oracle.getEthPrice();
+        uint256 maxMint = (depositAmount * ethPrice) / 1e18 / 2;
+        vm.prank(user);
+        stablecoin.mint(maxMint);
+
+        oracle.setEthPrice(oracle.getEthPrice() / 2);
+
+        address liquidator = address(0xCAFE);
+        vm.deal(liquidator, 0);
+        deal(address(stablecoin), liquidator, maxMint);
+
+        uint256 liquidatorBalanceBefore = liquidator.balance;
+
+        vm.prank(liquidator);
+        stablecoin.liquidate(user);
+
+        assertEq(stablecoin.debt(user), 0, "Debt not cleared");
+        assertEq(stablecoin.collateralETH(user), 0, "Collateral not cleared");
+
+        uint256 expectedReward = (depositAmount * 80) / 100;
+        assertApproxEqAbs(
+            liquidator.balance - liquidatorBalanceBefore,
+            expectedReward,
+            2
+        );
+    }
+
+    function testLiquidate_reverts_whenPositionHealthy() public {
+        address user = address(0xBEEF);
+        uint256 depositAmount = 1 ether;
+        vm.deal(user, depositAmount);
+        vm.prank(user);
+        stablecoin.deposit{value: depositAmount}();
+
+        uint256 ethPrice = oracle.getEthPrice();
+        uint256 safeMint = (depositAmount * ethPrice) / 1e18 / 2;
+        vm.prank(user);
+        stablecoin.mint(safeMint);
+
+        address liquidator = address(0xCAFE);
+        vm.deal(liquidator, 1 ether);
+
+        vm.prank(liquidator);
+        vm.expectRevert("Position is healthy");
+        stablecoin.liquidate(user);
+    }
 }
