@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.28;
 
-contract Oracle {
+contract MockOracle {
 
     uint256 private ethPrice;
     uint256 private violPrice;
