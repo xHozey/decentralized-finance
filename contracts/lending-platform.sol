@@ -57,7 +57,7 @@ contract LendingPlatform {
     function borrowStable(uint256 amount) external {
         uint256 price = oracle.getPrice();
 
-        uint256 collateralValue = (volatileDeposits[msg.sender] * price) / 1e18;
+        uint256 collateralValue = (volatileDeposits[msg.sender] * price);
 
         uint256 newDebt = borrowedStable[msg.sender] + amount;
 
@@ -73,10 +73,10 @@ contract LendingPlatform {
     function liquidate(address user) external {
         uint256 price = oracle.getPrice();
 
-        uint256 collateralValue = (volatileDeposits[user] * price) / 1e18;
+        uint256 collateralValue = (volatileDeposits[user] * price);
 
         uint256 debt = borrowedStable[user];
-
+        
         require(debt > 0, "No debt");
 
         require(collateralValue * 100 < debt * 150, "Position healthy");

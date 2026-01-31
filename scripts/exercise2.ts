@@ -27,6 +27,11 @@ async function main() {
   await volatile.transfer(await secondUser.getAddress(), 2000);
   await volatile.connect(secondUser).approve(lendingPlatform.target, 2000);
   await lendingPlatform.connect(secondUser).depositVolatile(2000);
+  await stable.transfer(await secondUser.getAddress(), 200000);
+  console.log(
+    "stable balance: ",
+    await stable.balanceOf(secondUser.getAddress())
+  );
   console.log(
     "lvolatile balance: ",
     await lvolatile.balanceOf(secondUser.getAddress())
@@ -37,7 +42,8 @@ async function main() {
   } catch (e) {
     console.log("borrow failed");
   }
-
+  await volatile.approve(lendingPlatform.target, 2);
+  await lendingPlatform.depositVolatile(2);
   try {
     await lendingPlatform.borrowStable(20);
     console.log(
@@ -47,6 +53,18 @@ async function main() {
   } catch (e) {
     console.log("borrow failed");
   }
+
+  await oracle.setPrice(10);
+
+  console.log(
+    "deposits: ",
+    await lendingPlatform.volatileDeposits(deployer.getAddress())
+  );
+  await stable.connect(secondUser).approve(lendingPlatform.target, 200000);
+  await lendingPlatform
+    .connect(secondUser)
+    .liquidate(await deployer.getAddress());
+  console.log("liquidation success");
 }
 
 async function deployTokens(ethers: HardhatEthers) {

@@ -33,6 +33,12 @@ async function main() {
     console.log(err.message);
   }
 
+  try {
+    await stableCoin.withdraw(ethers.parseEther("1"))
+  } catch(e) {
+    console.log(e.message)
+  }
+
   await stableCoin.burn(200);
   console.log(
     "StableCoin after burn:",
