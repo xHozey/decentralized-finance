@@ -14,7 +14,7 @@ contract LendingPlatform {
     LStable public lStable;
     Lvolatile public lVolatile;
     Oracle public oracle;
-
+    address deployer;
     mapping(address => uint256) public stableDeposits;
     mapping(address => uint256) public volatileDeposits;
     mapping(address => uint256) public borrowedStable;
@@ -29,9 +29,14 @@ contract LendingPlatform {
         stable = Stable(_stable);
         lStable = LStable(_lStable);
         lVolatile = Lvolatile(_lVolatile);
+        deployer = msg.sender;
     }
 
     function registerOracle(address oracleAddress_) public {
+        require(
+            msg.sender == deployer,
+            "Only deployer can register the oracle"
+        );
         oracle = Oracle(oracleAddress_);
     }
 

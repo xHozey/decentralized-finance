@@ -8,4 +8,5 @@ contract Stable is ERC20 {
     constructor() ERC20("Stable", "STBL") {
         _mint(msg.sender, 1000000 * 10 ** decimals());
     }
+    
 }
